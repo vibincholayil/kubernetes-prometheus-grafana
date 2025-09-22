@@ -20,14 +20,14 @@ k8s-monitoring-project/
 │── README.md                 # Documentation
 
 ### Steps
-1. Provision Kubernetes Cluster
+#### 1. Provision Kubernetes Cluster
 
 environment: Minikube (local testing) and AKS (Azure)  
 
 (Minikube): minikube start --memory=4096 --cpus=2
 kubectl get nodes
 
-2. Install Prometheus & Grafana (Helm)
+#### 2. Install Prometheus & Grafana (Helm)
 
 Add Helm repo & update:
 
@@ -59,6 +59,7 @@ kubectl get svc -n monitoring
 Linux Node Exporter (runs as DaemonSet):
 
 # node-exporter-daemonset.yaml
+```
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -78,7 +79,7 @@ spec:
         image: prom/node-exporter
         ports:
         - containerPort: 9100
-
+```
 
 Windows Exporter runs similarly (port 9182).
 
@@ -91,6 +92,7 @@ kubectl apply -f manifests/node-exporter-daemonset.yaml
 Instead of editing values.yaml, use a ConfigMap:
 
 # configmap-scrape.yaml
+```
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -101,7 +103,7 @@ data:
     - job_name: 'web'
       static_configs:
         - targets: ['node1:9100','node2:9100']
-
+```
 5. Create Grafana Dashboards
 
 Import from dashboards/linux-dashboard.json or use PromQL queries:
@@ -125,6 +127,7 @@ label_values(node_cpu_seconds_total, instance)
 Alert Example (CPU > 80%):
 
 # cpu-alert.yaml
+```
 groups:
 - name: cpu-alerts
   rules:
@@ -136,7 +139,7 @@ groups:
     annotations:
       summary: "High CPU usage on {{ $labels.instance }}"
       description: "CPU usage is above 80% for 1m"
-
+```
 7. (Optional) SMTP for Email Alerts
 
 Create Kubernetes Secret for SMTP:
