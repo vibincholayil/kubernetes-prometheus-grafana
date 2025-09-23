@@ -23,42 +23,38 @@ k8s-monitoring-project/
 #### 1. Provision Kubernetes Cluster
 
 environment: Minikube (local testing) and AKS (Azure)  
-
 (Minikube): minikube start --memory=4096 --cpus=2
 kubectl get nodes
 
 #### 2. Install Prometheus & Grafana (Helm)
 
 Add Helm repo & update:
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  
+helm repo update  
+Install stack with custom values:  
 
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-
-
-Install stack with custom values:
-
-helm upgrade --install monitor prometheus-community/kube-prometheus-stack \
-  -n monitoring --create-namespace \
-  -f helm/prometheus-values.yaml
-
-
+helm upgrade --install monitor prometheus-community/kube-prometheus-stack \  
+  -n monitoring --create-namespace \  
+  -f helm/prometheus-values.yaml  
+```
 Expose Grafana & Prometheus with NodePort:
 
-# grafana-values.yaml
+##### grafana-values.yaml
+```
 service:
   type: NodePort
   nodePort: 32000
-
+```
 
 Check services:
-
 kubectl get svc -n monitoring
 
-3. Deploy Exporters
+### 3. Deploy Exporters
 
 Linux Node Exporter (runs as DaemonSet):
 
-# node-exporter-daemonset.yaml
+##### node-exporter-daemonset.yaml
 ```
 apiVersion: apps/v1
 kind: DaemonSet
@@ -81,13 +77,10 @@ spec:
         - containerPort: 9100
 ```
 
-Windows Exporter runs similarly (port 9182).
+Windows Exporter runs similarly (port 9182).  
+Apply: kubectl apply -f manifests/node-exporter-daemonset.yaml
 
-Apply:
-
-kubectl apply -f manifests/node-exporter-daemonset.yaml
-
-4. Configure Scrape Targets (ConfigMap)
+#### 4. Configure Scrape Targets (ConfigMap)
 
 Instead of editing values.yaml, use a ConfigMap:
 
@@ -104,7 +97,7 @@ data:
       static_configs:
         - targets: ['node1:9100','node2:9100']
 ```
-5. Create Grafana Dashboards
+#### 5. Create Grafana Dashboards
 
 Import from dashboards/linux-dashboard.json or use PromQL queries:
 
@@ -117,7 +110,7 @@ Memory Usage Query
 
 node_memory_Active_bytes / node_memory_MemTotal_bytes * 100
 
-6. Add Variables & Alerts
+#### 6. Add Variables & Alerts
 
 Variable Example (instance filter):
 
@@ -126,7 +119,7 @@ label_values(node_cpu_seconds_total, instance)
 
 Alert Example (CPU > 80%):
 
-# cpu-alert.yaml
+##### cpu-alert.yaml
 ```
 groups:
 - name: cpu-alerts
@@ -140,7 +133,7 @@ groups:
       summary: "High CPU usage on {{ $labels.instance }}"
       description: "CPU usage is above 80% for 1m"
 ```
-7. (Optional) SMTP for Email Alerts
+#### 7. (Optional) SMTP for Email Alerts
 
 Create Kubernetes Secret for SMTP:
 
@@ -157,7 +150,7 @@ stringData:
 
 Configure Grafana to use it under Contact Points.
 
-✅ Deliverables
+### Deliverables
 
 Prometheus & Grafana deployed on Kubernetes.
 
